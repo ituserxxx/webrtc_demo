@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <title>webrtc demo</title>
+        <meta charset="utf-8"/>
+    </head>
+    <body>
+        <div style="display: flex; height: 100%;">
+            <div style="width: 10%;">
+                <ul id="peer_list"></ul>
+            </div>
+
+            <div style="width: 90%;">
+                <div style="text-align: center;">
+                    <h2>音视频聊天</h2>
+                    <label>我的ID </label>
+                    <input type="text" id="in_my_peer_id"></input>
+                    <button id="bt_login">登录</button>
+                </div>
+
+                <div style="text-align: center; display: inline-block; width: 100%; margin-top: 50px;">
+                    <div style="text-align: center; display: inline-block; width: 640px; height: 480px;">
+                        <video autoplay playsinline id="local_video"></video>
+                    </div>
+
+                    <div style="text-align: center; display: inline-block; width: 640px; height: 480px;">
+                        <video autoplay playsinline id="remote_video"></video>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+        <script src="./webrtc_demo_client.js"></script>
+    </body>
+</html>
