@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Video Call</title>
+</head>
+
+<body>
+    <video id="localVideo" autoplay muted></video>
+    <button id="callButton">呼叫 B 端</button>
+    <video id="remoteVideo" autoplay></video>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const socket = io();
+        socket.emit('joinRoom', 'room1');
+        const stunUrl = 'stun:172.16.9.103:3478'
+        //    const stunUrl = 'stun:stun.l.google.com:19302'
+        let peerA = new RTCPeerConnection({ iceServers: [{ urls: stunUrl }] });
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                localVideo.srcObject = stream;
+                stream.getTracks().forEach(track => peerA.addTrack(track, stream));
+                peerA.ontrack = event => {
+                    remoteVideo.srcObject = event.streams[0];
+                };
+            });
+        peerA.onicecandidate = event => {
+            if (event.candidate) {
+                socket.emit('candidate', { candidate: event.candidate, to: 'B', room: "room1" });
+            }
+        };
+        // peerA.onnegotiationneeded = () => {
+        //     createOffer();
+        // };
+        document.getElementById('callButton').addEventListener('click', () => {
+            if (peerA) {
+                console.log("call user B")
+
+                peerA.createOffer().then(offer => {
+                    return peerA.setLocalDescription(offer);
+                }).then(() => {
+                    const offerSDP = peerA.localDescription;
+                    socket.emit('offer', { sdp: offerSDP, to: 'B', room: "room1" });
+                }).catch(error => {
+                    console.error('Error creating offer:', error);
+                });
+            } else {
+                console.error('peerA is not initialized');
+            }
+        });
+
+        socket.on('answer', ({ sdp }) => {
+            peerA.setRemoteDescription(new RTCSessionDescription(sdp));
+        });
+        socket.on('candidate', ({ candidate }) => { peerA.addIceCandidate(new RTCIceCandidate(candidate)); });
+    </script>
+</body>
+
+</html>

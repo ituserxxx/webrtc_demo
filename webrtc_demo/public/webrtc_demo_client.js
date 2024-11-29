@@ -202,21 +202,27 @@ function Login() {
 		alert('用户名不能为空');
 		return;
 	}
-
+    // 这里需要 wws 
 	wsConn = new WebSocket(`wss://${window.location.hostname}:4445/?peerId=${myPeerId}`);
+
 	wsConn.onopen = function() {
 		console.log('Connect signal server success');
         btLogin.textContent = '登出';
 	}
+
 	wsConn.onclose = function() {
 		console.log('Disconnect from signal server');
 	}
+
 	wsConn.onerror = function(error) {
 		console.log('Connect signal server failed, error:', error);
 	}
+
 	wsConn.onmessage = function(event) {
 		var message = event.data;
 		var messageObj = JSON.parse(message);
+
+        // ws msg事件-当前所有在线 client
 		if (messageObj.messageId === 'CURRENT_PEERS') {
             console.log('Recv CURRENT_PEERS message, peerList:', messageObj.messageData.peerList);
             ulPeerList.innerHTML = '';
@@ -228,15 +234,20 @@ function Login() {
                 }
                 ulPeerList.appendChild(li);
             });
-        } else if (messageObj.messageId === 'PEER_JOIN') {
+        }
+        // ws msg事件-client 加入
+        if (messageObj.messageId === 'PEER_JOIN') {
             console.log('Recv PEER_JOIN message, peerId:', messageObj.messageData.peerId);
             const li = document.createElement('li');
             li.textContent = messageObj.messageData.peerId;
+            // 给加入的 client 名称上面绑定点击事件
             li.onclick = function() {
                 StartCall(true, messageObj.messageData.peerId);
             }
             ulPeerList.appendChild(li);
-        } else if (messageObj.messageId === 'PEER_LEAVE') {
+        }
+        // ws msg事件-client 离开
+        if (messageObj.messageId === 'PEER_LEAVE') {
             console.log('Recv PEER_LEAVE message, peerId:', messageObj.messageData.peerId);
             var liPeerElements = ulPeerList.getElementsByTagName("li");
             for (let i = 0;i < liPeerElements.length;i++) {
@@ -247,7 +258,9 @@ function Login() {
                     }
                 }
             }
-        } else if (messageObj.messageId === 'PROXY') {
+        }
+        // ws msg事件-client PROXY
+        if (messageObj.messageId === 'PROXY') {
             console.log('Recv PROXY message', message);
             if (messageObj.type === 'start_call') {
                 StartCall(false, messageObj.fromPeerId);
